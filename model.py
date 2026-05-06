@@ -36,43 +36,43 @@ fixed_opex_reduction = st.sidebar.slider("Fixed OPEX Optimization %", 0, 70, 0)
 # --- LOGIC & CALCULATIONS ---
 
 # Interest Calculation (Monthly)
-# Debt stack: 3M at 2.5%/mo, 1.5M at 30% APR (2.5%/mo), 5M at 8%/yr, 9.4M at 8%/yr
+# Debt stack: 3M at 2.5%/mo, 1.5M at 30% APR (2.5%/mo), 5M current at 8%/yr, 9.4M incoming at 8%/yr
 debt_high_interest_monthly = (3000000 * 0.025) + (1500000 * 0.025)
 debt_longterm_monthly = (5000000 * 0.08) / 12 
 incoming_loan_monthly = (9400000 * 0.08) / 12
 
 if is_refinanced:
-    # Retiring the 3M high-interest loan as per user's 3M bailout budget
+    # Retiring the 3M high-interest loan as per user budget
     monthly_interest = (1500000 * 0.025) + debt_longterm_monthly + incoming_loan_monthly
 else:
     monthly_interest = debt_high_interest_monthly + debt_longterm_monthly + incoming_loan_monthly
 
-# MH Pillar Logic
+# Mental Health Pillar Logic
 mh_revenue = mh_sessions * mh_price
 if mh_model == "Fixed Salary (Current)":
     mh_gross_margin_pct = 0.20
     mh_clinician_cost = mh_revenue * 0.80
 else:
     mh_gross_margin_pct = 0.60
-    mh_clinician_cost = mh_revenue * 0.40 # Clinician gets 40% upon collection
+    mh_clinician_cost = mh_revenue * 0.40 # Clinicians get 40% only upon collection
 
-# YAKAP Pillar Logic (Capitation: 1,700/yr, Co-pay: 900/yr) [1, 2]
+# YAKAP Pillar Logic (Capitation: 1,700/yr, Co-pay: 900/yr)
 if yakap_model == "Internal Operations":
-    # Assumes monthly realization of Tranche 1 (40%) + Co-pay [3]
+    # 40% Tranche 1 realized monthly + Co-pay adoption
     yakap_revenue = (yakap_patients * 1700 * 0.40 / 12) + (yakap_patients * 900 * (careclub_adoption / 100) / 12)
-    yakap_opex = 95000 # Salary: 65k MD + 30k Nurse
-    # KPI costs: 50% need Labs (925 avg cost), 30% need meds (200 avg cost)
+    yakap_opex = 95000 # Salaries for MD and Nurse [1]
+    # Mandatory KPI costs: 50% Labs (925 avg), 30% meds (200 avg)
     yakap_variable_cost = (yakap_patients * (0.50 * 925 + 0.30 * 200)) / 12
 else:
-    # 30% royalty on the 1,700 capitation, zero operational costs for MindWell [4]
+    # 30% royalty on the 1,700 capitation, zero operational costs for MindWell
     yakap_revenue = (yakap_patients * 1700 * 0.30) / 12
     yakap_opex = 0
     yakap_variable_cost = 0
 
 # Fixed OPEX (Non-clinical)
-base_fixed_opex = 301999 # Derived from March 2026 non-clinical burn [5]
+base_fixed_opex = 301999 # Derived from March 2026 data excluding clinical salaries [2]
 if yakap_patients > 1500:
-    base_fixed_opex += 25000 # Scale hire logic
+    base_fixed_opex += 25000 # Scaling step-cost for second admin
 optimized_fixed_opex = base_fixed_opex * (1 - (fixed_opex_reduction / 100))
 
 # Totals
@@ -83,7 +83,7 @@ net_cash_flow = total_revenue - total_direct_cost - total_fixed_costs
 
 # M&A Valuation (Simplified)
 annual_ebitda = max(0, net_cash_flow * 12)
-valuation_low = annual_ebitda * 4 # Add-on multiple benchmark [6]
+valuation_low = annual_ebitda * 4 
 valuation_high = annual_ebitda * 8
 
 # --- DISPLAY DASHBOARD ---
@@ -107,10 +107,10 @@ st.table(df.style.format({"Monthly Revenue": "₱{:,.2f}", "Monthly Direct Costs
 # Strategic Insight
 st.subheader("💡 Strategic Advisory Insight")
 if net_cash_flow < 0:
-    st.error(f"**CRITICAL:** Monthly burn of ₱{abs(net_cash_flow):,.2f}. Structural intervention required to bridge the PhilHealth lag.")
+    st.error(f"**CRITICAL:** Monthly burn of ₱{abs(net_cash_flow):,.2f}. The business model is fragile; restructuring is required to bridge the PhilHealth lag.")
 elif is_refinanced and yakap_model == "Outsourced (Royalty Model)":
-    st.success("**OPTIMIZED:** Stabilized core. Model is 'M&A Ready' for a territory-based acquisition.")
+    st.success("**OPTIMIZED:** The core is stabilized and 'M&A Ready' for an acquisition by a larger platform.")
 else:
-    st.warning("**STABLE BUT FRAGILE:** Positive cash flow achieved, but monitor debt service coverage.")
+    st.warning("**STABLE BUT FRAGILE:** Positive cash flow achieved, but monitor your interest-coverage ratio.")
 
-st.info("**Benchmark Info:** PhilHealth YAKAP capitation is ₱1,700/year with a ₱900/year private co-pay limit.[2]")
+st.info("**Team Note:** This model accounts for the ₱1,700 PhilHealth YAKAP capitation and the ₱900 annual co-pay limit for private clinics.[3]")
