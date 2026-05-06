@@ -12,13 +12,19 @@ st.sidebar.header("🕹️ Strategy Knobs")
 
 # 1. Behavioral Health Pillar
 st.sidebar.subheader("Mental Health Pillar")
-mh_model = st.sidebar.selectbox("Clinician Pay Structure",)
+mh_model = st.sidebar.selectbox(
+    "Clinician Pay Structure",
+   
+)
 mh_sessions = st.sidebar.slider("Avg. Sessions per Month", 0, 500, 130)
 mh_price = st.sidebar.number_input("Avg. Session Price (PHP)", value=3500)
 
 # 2. Primary Care (YAKAP) Pillar
 st.sidebar.subheader("Primary Care (YAKAP)")
-yakap_model = st.sidebar.selectbox("YAKAP Operating Model",)
+yakap_model = st.sidebar.selectbox(
+    "YAKAP Operating Model",
+   
+)
 yakap_patients = st.sidebar.slider("Empaneled Patients", 0, 5000, 800)
 careclub_adoption = st.sidebar.slider("CareClub (₱900 Co-pay) Adoption %", 0, 100, 50)
 
@@ -51,10 +57,9 @@ else:
     mh_clinician_cost = mh_revenue * 0.40 # Clinicians get 40% share
 
 # YAKAP Pillar Logic
-# Capitation is 1,700 PHP per year
-# Co-pay is 900 PHP per year [1, 2]
+# Capitation is 1,700 PHP per year. Co-pay is 900 PHP per year
 if yakap_model == "Internal Operations":
-    # Cash flow assumes 40% Tranche 1 is realized monthly 
+    # Cash flow assumes 40% Tranche 1 is realized monthly [1]
     yakap_revenue = (yakap_patients * 1700 * 0.40 / 12) + (yakap_patients * 900 * (careclub_adoption / 100) / 12)
     yakap_opex = 95000 # Salaries for Primary Care MD and Nurse
     # KPI costs: 50% need Labs (925 avg), 30% need meds (200)
@@ -66,7 +71,7 @@ else:
     yakap_variable_cost = 0
 
 # Fixed OPEX (Non-clinical)
-base_fixed_opex = 301999 # Based on March 2026 data minus clinical salaries 
+base_fixed_opex = 301999 # Based on March 2026 records [2]
 if yakap_patients > 1500:
     base_fixed_opex += 25000 # Step cost for second Admin hire
 optimized_fixed_opex = base_fixed_opex * (1 - (fixed_opex_reduction / 100))
@@ -79,7 +84,7 @@ net_cash_flow = total_revenue - total_direct_cost - total_fixed_costs
 
 # M&A Valuation (Simplified)
 annual_ebitda = max(0, net_cash_flow * 12)
-valuation_low = annual_ebitda * 4
+valuation_low = annual_ebitda * 4 # Add-on multiple [3]
 valuation_high = annual_ebitda * 8
 
 # --- DISPLAY DASHBOARD ---
@@ -103,8 +108,10 @@ st.table(df.style.format({"Monthly Revenue": "₱{:,.2f}", "Monthly Direct Costs
 # Strategic Insight
 st.subheader("💡 Strategic Advisory Insight")
 if net_cash_flow < 0:
-    st.error(f"**CRITICAL:** Monthly burn of ₱{abs(net_cash_flow):,.2f}. The business requires higher utilization or refinancing.")
+    st.error(f"**CRITICAL:** Monthly burn of ₱{abs(net_cash_flow):,.2f}. The business requires higher utilization or immediate restructuring.")
 elif is_refinanced and yakap_model == "Outsourced (30% Royalty)":
     st.success("**OPTIMIZED:** The core is stabilized and 'M&A Ready' for a territory acquisition.")
 else:
-    st.warning("**STABLE BUT FRAGILE:** Positive cash flow achieved, but monitor patient retention rates.")
+    st.warning("**STABLE BUT FRAGILE:** Positive cash flow achieved, but monitor interest load carefully.")
+
+st.info("**Team Note:** This model accounts for the 1,700 PHP PhilHealth capitation and the 900 PHP maximum allowable co-pay per private clinic member.")
