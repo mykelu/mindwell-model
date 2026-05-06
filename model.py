@@ -35,44 +35,44 @@ fixed_opex_reduction = st.sidebar.slider("Fixed OPEX Optimization %", 0, 70, 0)
 
 # --- LOGIC & CALCULATIONS ---
 
-# Monthly Interest Calculation
-# Stack: 3M at 2.5%/mo, 1.5M at 30% APR (2.5%/mo), 5M at 8%/yr, 9.4M at 8%/yr
+# Interest Calculation (Monthly)
+# Debt stack: 3M at 2.5%/mo, 1.5M at 30% APR (2.5%/mo), 5M at 8%/yr, 9.4M at 8%/yr
 debt_high_interest_monthly = (3000000 * 0.025) + (1500000 * 0.025)
 debt_longterm_monthly = (5000000 * 0.08) / 12 
 incoming_loan_monthly = (9400000 * 0.08) / 12
 
 if is_refinanced:
-    # Retire the 3M high-interest loan as per your budget
+    # Retiring the 3M high-interest loan as per user's 3M bailout budget
     monthly_interest = (1500000 * 0.025) + debt_longterm_monthly + incoming_loan_monthly
 else:
     monthly_interest = debt_high_interest_monthly + debt_longterm_monthly + incoming_loan_monthly
 
-# Mental Health Pillar Logic
+# MH Pillar Logic
 mh_revenue = mh_sessions * mh_price
 if mh_model == "Fixed Salary (Current)":
     mh_gross_margin_pct = 0.20
     mh_clinician_cost = mh_revenue * 0.80
 else:
     mh_gross_margin_pct = 0.60
-    mh_clinician_cost = mh_revenue * 0.40
+    mh_clinician_cost = mh_revenue * 0.40 # Clinician gets 40% upon collection
 
-# YAKAP Pillar Logic (Capitation: 1700/yr, Co-pay: 900/yr)
+# YAKAP Pillar Logic (Capitation: 1,700/yr, Co-pay: 900/yr) [1, 2]
 if yakap_model == "Internal Operations":
-    # 40% Tranche 1 realized monthly + Co-pay
+    # Assumes monthly realization of Tranche 1 (40%) + Co-pay [3]
     yakap_revenue = (yakap_patients * 1700 * 0.40 / 12) + (yakap_patients * 900 * (careclub_adoption / 100) / 12)
     yakap_opex = 95000 # Salary: 65k MD + 30k Nurse
-    # KPI costs: 50% Labs (925), 30% meds (200)
+    # KPI costs: 50% need Labs (925 avg cost), 30% need meds (200 avg cost)
     yakap_variable_cost = (yakap_patients * (0.50 * 925 + 0.30 * 200)) / 12
 else:
-    # 30% royalty on the 1,700 capitation, zero operational costs for you
+    # 30% royalty on the 1,700 capitation, zero operational costs for MindWell [4]
     yakap_revenue = (yakap_patients * 1700 * 0.30) / 12
     yakap_opex = 0
     yakap_variable_cost = 0
 
 # Fixed OPEX (Non-clinical)
-base_fixed_opex = 301999 # Derived from March 2026 itemized records [2]
+base_fixed_opex = 301999 # Derived from March 2026 non-clinical burn [5]
 if yakap_patients > 1500:
-    base_fixed_opex += 25000 
+    base_fixed_opex += 25000 # Scale hire logic
 optimized_fixed_opex = base_fixed_opex * (1 - (fixed_opex_reduction / 100))
 
 # Totals
@@ -83,7 +83,7 @@ net_cash_flow = total_revenue - total_direct_cost - total_fixed_costs
 
 # M&A Valuation (Simplified)
 annual_ebitda = max(0, net_cash_flow * 12)
-valuation_low = annual_ebitda * 4 
+valuation_low = annual_ebitda * 4 # Add-on multiple benchmark [6]
 valuation_high = annual_ebitda * 8
 
 # --- DISPLAY DASHBOARD ---
@@ -98,7 +98,7 @@ st.markdown("---")
 st.subheader("📊 Monthly Pillar Performance Breakdown")
 pillar_data = {
     "Pillar":,
-    "Monthly Revenue": [mh_revenue, yakap_revenue, 0],
+    "Monthly Revenue": [mh_revenue, yakap_revenue, 0.0],
     "Monthly Direct Costs": [mh_clinician_cost, yakap_opex + yakap_variable_cost, optimized_fixed_opex + monthly_interest],
 }
 df = pd.DataFrame(pillar_data)
@@ -109,8 +109,8 @@ st.subheader("💡 Strategic Advisory Insight")
 if net_cash_flow < 0:
     st.error(f"**CRITICAL:** Monthly burn of ₱{abs(net_cash_flow):,.2f}. Structural intervention required to bridge the PhilHealth lag.")
 elif is_refinanced and yakap_model == "Outsourced (Royalty Model)":
-    st.success("**OPTIMIZED:** Stabilized core. Model is 'M&A Ready' for platform acquisition.")
+    st.success("**OPTIMIZED:** Stabilized core. Model is 'M&A Ready' for a territory-based acquisition.")
 else:
     st.warning("**STABLE BUT FRAGILE:** Positive cash flow achieved, but monitor debt service coverage.")
 
-st.info("**Benchmark:** PhilHealth YAKAP capitation is ₱1,700/year with a ₱900/year private co-pay limit.")
+st.info("**Benchmark Info:** PhilHealth YAKAP capitation is ₱1,700/year with a ₱900/year private co-pay limit.[2]")
