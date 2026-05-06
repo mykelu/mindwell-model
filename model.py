@@ -14,7 +14,7 @@ st.sidebar.header("🕹️ Strategy Knobs")
 st.sidebar.subheader("Mental Health Pillar")
 mh_model = st.sidebar.selectbox(
     "Clinician Pay Structure",
-   
+    options=
 )
 mh_sessions = st.sidebar.slider("Avg. Sessions per Month", 0, 500, 130)
 mh_price = st.sidebar.number_input("Avg. Session Price (PHP)", value=3500)
@@ -23,26 +23,26 @@ mh_price = st.sidebar.number_input("Avg. Session Price (PHP)", value=3500)
 st.sidebar.subheader("Primary Care (YAKAP)")
 yakap_model = st.sidebar.selectbox(
     "YAKAP Operating Model",
-   
+    options=
 )
 yakap_patients = st.sidebar.slider("Empaneled Patients", 0, 5000, 800)
 careclub_adoption = st.sidebar.slider("CareClub (₱900 Co-pay) Adoption %", 0, 100, 50)
 
 # 3. Financial & Debt Structure
 st.sidebar.subheader("Debt & Liquidity")
-is_refinanced = st.sidebar.checkbox("Apply ₱3M Bailout to 2.5%/mo Debt", value=False)
+is_refinanced = st.sidebar.checkbox("Apply ₱3M Bailout to plug 'Leakage Debt'", value=False)
 fixed_opex_reduction = st.sidebar.slider("Fixed OPEX Optimization %", 0, 70, 0)
 
 # --- LOGIC & CALCULATIONS ---
 
 # Interest Calculation (Monthly)
 # High interest: 3M at 2.5% monthly, 1.5M at 30% APR (2.5% monthly)
-# Long term: 14.4M at 8% per annum
+# Long term: 14.4M total (5M current + 9.4M incoming) at 8% per annum
 debt_high_interest_monthly = (3000000 * 0.025) + (1500000 * 0.025)
-debt_longterm_monthly = (14400000 * 0.08) / 12
+debt_longterm_monthly = (5000000 * 0.08) / 12 # Interest on the current 5M portion
 
 if is_refinanced:
-    # Retiring the 3M loan at 2.5% monthly interest
+    # Retiring the 3M 'Leakage' loan as per user budget
     monthly_interest = (1500000 * 0.025) + debt_longterm_monthly
 else:
     monthly_interest = debt_high_interest_monthly + debt_longterm_monthly
@@ -57,23 +57,23 @@ else:
     mh_clinician_cost = mh_revenue * 0.40 # Clinicians get 40% share
 
 # YAKAP Pillar Logic
-# Capitation is 1,700 PHP per year. Co-pay is 900 PHP per year
+# Capitation is 1,700 PHP per year. Co-pay is 900 PHP per year.
 if yakap_model == "Internal Operations":
-    # Cash flow assumes 40% Tranche 1 is realized monthly [1]
+    # Cash flow assumes 40% Tranche 1 is realized monthly 
     yakap_revenue = (yakap_patients * 1700 * 0.40 / 12) + (yakap_patients * 900 * (careclub_adoption / 100) / 12)
-    yakap_opex = 95000 # Salaries for Primary Care MD and Nurse
+    yakap_opex = 95000 # Salaries for Primary Care MD (65k) and Nurse (30k) [3]
     # KPI costs: 50% need Labs (925 avg), 30% need meds (200)
     yakap_variable_cost = (yakap_patients * (0.50 * 925 + 0.30 * 200)) / 12
 else:
-    # 30% royalty on the full 1700 capitation, zero operational costs
+    # 30% royalty on the full 1700 capitation, zero operational costs (as per user proposal)
     yakap_revenue = (yakap_patients * 1700 * 0.30) / 12
     yakap_opex = 0
     yakap_variable_cost = 0
 
 # Fixed OPEX (Non-clinical)
-base_fixed_opex = 301999 # Based on March 2026 records [2]
+base_fixed_opex = 301999 # Non-clinical burn derived from March 2026 data [4]
 if yakap_patients > 1500:
-    base_fixed_opex += 25000 # Step cost for second Admin hire
+    base_fixed_opex += 25000 # Step cost for additional Admin support
 optimized_fixed_opex = base_fixed_opex * (1 - (fixed_opex_reduction / 100))
 
 # Totals
@@ -84,7 +84,7 @@ net_cash_flow = total_revenue - total_direct_cost - total_fixed_costs
 
 # M&A Valuation (Simplified)
 annual_ebitda = max(0, net_cash_flow * 12)
-valuation_low = annual_ebitda * 4 # Add-on multiple [3]
+valuation_low = annual_ebitda * 4 # Add-on multiple benchmark [5]
 valuation_high = annual_ebitda * 8
 
 # --- DISPLAY DASHBOARD ---
@@ -109,9 +109,9 @@ st.table(df.style.format({"Monthly Revenue": "₱{:,.2f}", "Monthly Direct Costs
 st.subheader("💡 Strategic Advisory Insight")
 if net_cash_flow < 0:
     st.error(f"**CRITICAL:** Monthly burn of ₱{abs(net_cash_flow):,.2f}. The business requires higher utilization or immediate restructuring.")
-elif is_refinanced and yakap_model == "Outsourced (30% Royalty)":
+elif is_refinanced and yakap_model == "Outsourced (Royalty Model)":
     st.success("**OPTIMIZED:** The core is stabilized and 'M&A Ready' for a territory acquisition.")
 else:
     st.warning("**STABLE BUT FRAGILE:** Positive cash flow achieved, but monitor interest load carefully.")
 
-st.info("**Team Note:** This model accounts for the 1,700 PHP PhilHealth capitation and the 900 PHP maximum allowable co-pay per private clinic member.")
+st.info("**Team Note:** This model accounts for the 1,700 PHP PhilHealth capitation and the 900 PHP maximum allowable co-pay per member.")
